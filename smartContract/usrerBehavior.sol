@@ -17,7 +17,8 @@ contract userBehavior is FileStruct, Ownable {
     Feedback[] public _feedback;
     mapping(address=>File[]) Filelist;
     mapping(uint=>File) files;
-    mapping (string=>usingDataContract)usingDataContractList;
+    mapping(address => User) UserList;
+    mapping (string=>usingDataContract) usingDataContractList;
 
     modifier isValidFile(uint _idFile) {
         require(files[_idFile].valid,"File chưa đc xác thực");
@@ -35,7 +36,13 @@ contract userBehavior is FileStruct, Ownable {
 
     // Using data
     function downloadData(uint _idFile) public isValidFile(_idFile) returns(string memory) {
-        require();
+        require(files[_idFile].valid,"File haven't ready to download !");
+        UserList[msg.sender].usedList.push(_idFile);
+        files[_idFile].totalUsed = files[_idFile].totalUsed.add(1);
+        files[_idFile].weekUsed = files[_idFile].weekUsed.add(1);
+        
+        emit Log_downloadFile(msg.sender, _idFile);
+        return files[_idFile].fileHash;
     }
 
     //Get owner of data
@@ -91,26 +98,47 @@ contract userBehavior is FileStruct, Ownable {
     }
 
     //Thoả thuận giữa 2 người
-    function setApproved(){
+    function setApproved(string memory _idContractMongo) public{
+        require(usingDataContractList[_idContractMongo].timeExpired > now,"This contract is expired!");
+        require(msg.sender == usingDataContractList[_idContractMongo].signer && usingDataContractList[_idContractMongo].signerApproved == false
+        || msg.sender == usingDataContractList[_idContractMongo].owner && usingDataContractList[_idContractMongo].ownerApproved == false,
+        "the Error about signer or owner address!");
 
+        if(msg.sender == usingDataContractList[_idContractMongo].signer){
+            usingDataContractList[_idContractMongo].signerApproved = true;
+        }
+        if(msg.sender == usingDataContractList[_idContractMongo].owner){
+            usingDataContractList[_idContractMongo].ownerApproved=true;
+        }
     }
 
     // Huỷ hợp đồng
-    function cancelContract(){
-
+    function cancelContract(string memory _idContractMongo) public{
+        require(usingDataContractList[_idContractMongo].isCancel == false);
+        require(usingDataContractList[_idContractMongo].ownerApproved == true && usingDataContractList[_idContractMongo].signerApproved == true);
+        require(msg.sender == usingDataContractList[_idContractMongo].signer || msg.sender == usingDataContractList[_idContractMongo].owner);
+        usingDataContractList[_idContractMongo].isCancel = true;
+        if(msg.sender == usingDataContractList[_idContractMongo].owner){
+            // transfer ether compensation
+        }
+        if(msg.sender == usingDataContractList[_idContractMongo].signer){
+            // transfer ether compensation
+        }
     }
 
     // Get using data contract
-    function getUsingDataContract() {
-
+    function getUsingDataContract(string memory _idContractMongo) public view returns(usingDataContract memory) {
+        return usingDataContractList[_idContractMongo];
     }
 
     // Get owner of using data contract
-    function getOwnerContract(){}
+    function getOwnerContract(string memory _idContractMongo) public view returns(address){
+        return usingDataContractList[_idContractMongo].owner;
+    }
     
     //Get signer of using data contract 
-    function getSignerContractList(){
-
+    function getSignerContract(string memory _idContractMongo) public view returns(address){
+        return usingDataContractList[_idContractMongo].signer;
     }
 
     // Create survey to collect infomation

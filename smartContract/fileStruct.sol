@@ -29,7 +29,7 @@ contract FileStruct {
         uint blockTime;
         bool valid;
         Kind kind;
-        Feedback[] feedback;
+        uint feedback;
     }
 
     struct Feedback{
@@ -74,6 +74,8 @@ contract FileStruct {
         uint startDate;
         uint endDate;
         uint feePerASurvey;
-        uint participated;
+        uint surveyInDemand;
+        uint participatedPeople;
+
     }
 }

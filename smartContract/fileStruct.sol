@@ -45,11 +45,11 @@ contract FileStruct {
     }
 
     struct user{
-        string name;
         address ownerAddress;
         uint[] uploadList;
         uint[] usedList;
         bool isValid;
+        uint surveyCreated;
         uint activity;
         uint reliability;
         individualData personalData;
@@ -69,12 +69,13 @@ contract FileStruct {
 
     struct Survey{
         uint idSurvey;
+        address owner;
         string idMongoose;
         string contentHash;
         uint startDate;
         uint endDate;
         uint feePerASurvey;
-        uint surveyInDemand;
+        uint surveyInDemand; // the number of survey need to take
         uint participatedPeople;
 
     }

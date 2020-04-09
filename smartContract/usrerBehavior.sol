@@ -8,6 +8,7 @@ contract userBehavior is FileStruct, Ownable {
     event Log_uploadData(address owner, Kind kind, uint idFile);
     event Log_downloadFile(address recipient, uint idFile);
     event Log_signUsingDataContract(uint idFile,address owner, address signer);
+    event Log_cancelContract(uint id, address canceler);
     event Log_takeFeedback(address ownerFeedback, uint idFile);
     event Log_createSurvey(address owner, uint idSurvey);
     event Log_sharingIndividualData(address indexed owner);
@@ -15,10 +16,13 @@ contract userBehavior is FileStruct, Ownable {
 
     uint idFile = 0;
     uint idSurvey = 0;
+    uint idContract = 0;
     Feedback[] public _feedback;
-    mapping(address=>File[]) Filelist;
-    mapping(uint=>File) files;
+    //mapping(address=>File[]) FileList;
+    mapping(uint => File) files;
     mapping(address => User) UserList;
+    mapping(uint => Survey) survey;
+    mapping(uint => usingDataContract[]) usingDataContractOfAUser;
     mapping (string=>usingDataContract) usingDataContractList;
 
     modifier isValidFile(uint _idFile) {
@@ -31,19 +35,22 @@ contract userBehavior is FileStruct, Ownable {
     }
     // Upload data
     function uploadData(string memory _fileHash, uint _price, Kind _kind, string memory _idMongoose) public isValidUser(msg.sender) returns(uint) {
-      idFile++;
+        idFile++;
 
 
-      File memory tempFile = File(idFile,_idMongoose,_fileHash,msg.sender,_price,0,0,now,false,_kind,0);
-      Filelist[msg.sender].push(tempFile);
-      files[idFile] = tempFile;
-      emit Log_uploadData(msg.sender,_kind,idFile);
-      return idFile;
+        File memory tempFile = File(idFile,_idMongoose,_fileHash,msg.sender,_price,0,0,now,false,_kind,0);
+        //Filelist[msg.sender].push(tempFile);
+        UserList[msg.sender].uploadList.push(tempFile);
+        files[idFile] = tempFile;
+        emit Log_uploadData(msg.sender,_kind,idFile);
+        return idFile;
     }
 
     // Using data
-    function downloadData(uint _idFile) public isValidFile(_idFile) isValidUser(msg.sender) returns(string memory) {
+    function downloadData(uint _idFile) public isValidFile(_idFile) isValidUser(msg.sender) payable returns(string memory) {
         require(files[_idFile].valid,"File haven't ready to download !");
+        require(msg.value > files[_idFile].price,"You haven't tranfer enough moneys!");
+        files[_idFile].owner.transfer(files[_idFile].price.mul(0.8));
         UserList[msg.sender].usedList.push(_idFile);
         files[_idFile].totalUsed = files[_idFile].totalUsed.add(1);
         files[_idFile].weekUsed = files[_idFile].weekUsed.add(1);
@@ -88,6 +95,7 @@ contract userBehavior is FileStruct, Ownable {
             _signerApproved = true;
         }
         usingDataContract memory tempContract = usingDataContract(
+            0,
             _idFile,
             _dataHash,
             _contentHash,
@@ -105,18 +113,42 @@ contract userBehavior is FileStruct, Ownable {
     }
 
     //Thoả thuận giữa 2 người
-    function setApproved(string memory _idContractMongo) public isValidUser(msg.sender) {
+    function setApproved(string memory _idContractMongo) public isValidUser(msg.sender) payable {
         require(usingDataContractList[_idContractMongo].timeExpired > now,"This contract is expired!");
         require(msg.sender == usingDataContractList[_idContractMongo].signer && usingDataContractList[_idContractMongo].signerApproved == false
         || msg.sender == usingDataContractList[_idContractMongo].owner && usingDataContractList[_idContractMongo].ownerApproved == false,
         "the Error about signer or owner address!");
-
         if(msg.sender == usingDataContractList[_idContractMongo].signer){
+            require(msg.sender.balance > usingDataContractList[_idContractMongo].contractMoney.add(usingDataContractList[_idContractMongo].signerCompensationAmount),
+            "You are not eligible!");
+            require(msg.value = usingDataContractList[_idContractMongo].contractMoney.add(usingDataContractList[_idContractMongo].signerCompensationAmount));
+            files[usingDataContractList[_idContractMongo].idFile].owner.transfer(usingDataContractList[_idContractMongo].contractMoney.mul(0.9));
             usingDataContractList[_idContractMongo].signerApproved = true;
         }
         if(msg.sender == usingDataContractList[_idContractMongo].owner){
-            usingDataContractList[_idContractMongo].ownerApproved=true;
+            require(msg.sender.balance > usingDataContractList[_idContractMongo].ownerCompensationAmount,
+            "You are not eligible!");
+            require(msg.value = usingDataContractList[_idContractMongo].ownerCompensationAmount);
+            files[usingDataContractList[_idContractMongo].idFile].owner.transfer(usingDataContractList[_idContractMongo].contractMoney.mul(0.9));
+            usingDataContractList[_idContractMongo].ownerApproved = true;
         }
+        usingDataContract memory mainContract = usingDataContract(
+            idContract.add(1),
+            usingDataContractList[_idContractMongo].idFile,
+            usingDataContractList[_idContractMongo].dataHash,
+            usingDataContractList[_idContractMongo].contentHash,
+            usingDataContractList[_idContractMongo].contractMoney,
+            usingDataContractList[_idContractMongo].owner,
+            usingDataContractList[_idContractMongo].ownerCompensationAmount,
+            usingDataContractList[_idContractMongo].ownerApproved,
+            usingDataContractList[_idContractMongo].signer,
+            usingDataContractList[_idContractMongo].signerCompensationAmount,
+            usingDataContractList[_idContractMongo].signerApproved,
+            usingDataContractList[_idContractMongo].timeExpired,
+            usingDataContractList[_idContractMongo].isCancel
+        );
+        usingDataContractOfAUser[_idFile].push(mainContract);
+        emit Log_signUsingDataContract(_idFile);
     }
 
     // Huỷ hợp đồng
@@ -155,11 +187,13 @@ contract userBehavior is FileStruct, Ownable {
         uint _endDay,
         uint _feePerASurvey,
         uint _surveyInDemand// the number of survey need to take
-    ) public isValidUser(msg.sender) {
-        require(/*check ether in user's balance*/);
+    ) public isValidUser(msg.sender) payable {
+        require(msg.sender.balance > _feePerASurvey.mul(_surveyInDemand),"Your balance is not enough!!");
+        require(msg.value > __feePerASurvey.mul(_surveyInDemand),"You haven't transfer money for this action!");
         idSurvey = idSurvey.add(1);
-        Survey memory survey = Survey(
+        Survey memory surveys = Survey(
             idSurvey,
+            msg.sender,
             _idMongoose,
             _contentHash,
             now,
@@ -168,7 +202,17 @@ contract userBehavior is FileStruct, Ownable {
             _surveyInDemand,
             0
         );
-        
+        survey[idSurvey] = surveys;
+        UserList[msg.sender].surveyCreated = UserList[msg.sender].surveyCreated.add(1);
+    }
+
+    //take Survey
+    function takeSurvey(uint _idSurvey) public isValidUser(msg.sender){
+        require(survey[_idSurvey].endDate > now,"Survey is expired!");
+        require(survey[_idSurvey].surveyInDemand < survey[_idSurvey].participatedPeople,"This survey is enough people!");
+        survey[_idSurvey].participatedPeople = survey[_idSurvey].participatedPeople.add(1);
+        UserList[msg.sender].activity = UserList[msg.sender].activity.add(1);
+        // chuyen tien
     }
 
     // Update latest ranking
@@ -197,3 +241,5 @@ contract userBehavior is FileStruct, Ownable {
     }
 }
 
+// check validality of user
+// 

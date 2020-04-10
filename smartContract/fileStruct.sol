@@ -4,6 +4,7 @@ contract FileStruct {
     enum Kind{text, audio, image}
 
     struct usingDataContract{
+        uint id;
         uint idFile; // usingdata smartcontract Id
         string dataHash;
         string contentHash;
@@ -32,16 +33,9 @@ contract FileStruct {
         uint feedback;
     }
 
-    struct Feedback{
-        address ownerFeedback;
-        uint stars;
-        string comment;
-        uint idFile;
-    }
-
     struct dataRanking{
         uint idFile;
-        uint rating;
+        uint downloaded;
     }
 
     struct user{
@@ -65,6 +59,7 @@ contract FileStruct {
         string addressLive;
         bool isMerried;
         uint phone;
+        bool shared;
     }
 
     struct Survey{

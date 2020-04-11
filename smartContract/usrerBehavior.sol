@@ -35,16 +35,16 @@ contract userBehavior is FileStruct, Ownable {
         require(files[_idFile].valid,"File haven't validated yet !");
         _;
     }
-    modifier isValidUser(address _user){
-        require(UserList[_user].isValid,"User haven't actived");
+    modifier isValidUser(){
+        require(UserList[msg.sender].isValid,"User haven't actived");
         _;
     }
 
-    function setTokenAddress(address _token) public onlyOwner{
+    function setTokenAddress(address _token) public onlyOwner isValidUser {
         token = Token(_token);
     }
 
-    function setDataSharingCommision(uint _pDMoney) public onlyOwner{
+    function setDataSharingCommision(uint _pDMoney) public onlyOwner isValidUser {
         pDMoney = _pDMoney;
     }
     // Upload data
@@ -66,7 +66,7 @@ contract userBehavior is FileStruct, Ownable {
     }
 
     // Using data
-    function downloadData(uint _idFile) public isValidFile(_idFile) isValidUser(msg.sender) returns(string memory) {
+    function downloadData(uint _idFile) public isValidFile(_idFile) isValidUser returns(string memory) {
         require(files[_idFile].valid,"File haven't ready to download !");
         usingDataContract[] memory result;
         for (uint i = 0; i < usingDataContractOfAData[_idFile]; i++) {
@@ -81,18 +81,17 @@ contract userBehavior is FileStruct, Ownable {
         UserList[msg.sender].usedList.push(_idFile);
         files[_idFile].totalUsed = files[_idFile].totalUsed.add(1);
         files[_idFile].weekUsed = files[_idFile].weekUsed.add(1);
-        
         emit Log_downloadFile(msg.sender, _idFile);
         return files[_idFile].fileHash;
     }
 
     //Get owner of data
-    function getUserUpload(uint _idFile) public view isValidUser(msg.sender) returns(user memory) {
+    function getUserUpload(uint _idFile) public view isValidUser returns(user memory) {
         return files[_idFile].owner;
     }
 
     //Get file by idFile
-    function getFileById(uint _idFile) public view isValidUser(msg.sender)  returns(File memory) {
+    function getFileById(uint _idFile) public view isValidUser  returns(File memory) {
         return files[_idFile];
     }
 
@@ -140,10 +139,10 @@ contract userBehavior is FileStruct, Ownable {
     }
 
     //Thoả thuận giữa 2 người
-    function setApproved(string memory _idContractMongo) public isValidUser(msg.sender) {
+    function setApproved(string memory _idContractMongo) public isValidUser {
         require(usingDataContractList[_idContractMongo].timeExpired > now,"This contract is expired!");
-        require(msg.sender == usingDataContractList[_idContractMongo].signer && usingDataContractList[_idContractMongo].signerApproved == false
-        || msg.sender == usingDataContractList[_idContractMongo].owner && usingDataContractList[_idContractMongo].ownerApproved == false,
+        require(msg.sender == usingDataContractList[_idContractMongo].signer &&
+        usingDataContractList[_idContractMongo].signerApproved == false || msg.sender == usingDataContractList[_idContractMongo].owner && usingDataContractList[_idContractMongo].ownerApproved == false,
         "the Error about signer or owner address!");
         if(msg.sender == usingDataContractList[_idContractMongo].signer){
             usingDataContractList[_idContractMongo].signerApproved = true;
@@ -177,7 +176,7 @@ contract userBehavior is FileStruct, Ownable {
     }
 
     // Huỷ hợp đồng
-    function cancelContract(uint _idFile) public isValidUser(msg.sender) {
+    function cancelContract(uint _idFile) public isValidUser {
         require(usingdatacontract[_idFile],"This contract not exist!");
         require(usingdatacontract[_idFile].isCancel == false && usingdatacontract[_idFile].timeExpired > now,
         "This contract has canceled already!");
@@ -194,22 +193,22 @@ contract userBehavior is FileStruct, Ownable {
     }
 
     // Get using data contract
-    function getUsingDataContract(uint _idFile) public view isValidUser(msg.sender) returns(usingDataContract memory) {
+    function getUsingDataContract(uint _idFile) public view isValidUser returns(usingDataContract memory) {
         return usingdatacontract[_idFile];
     }
 
     // Get owner of using data contract
-    function getOwnerContract(uint _idFile) public view isValidUser(msg.sender) returns(address){
+    function getOwnerContract(uint _idFile) public view isValidUser returns(address){
         return usingdatacontract[_idFile].owner;
     }
 
-    //Get signer of using data contract 
-    function getSignerContract(string _idFile) public view isValidUser(msg.sender) returns(address){
+    //Get signer of using data contract
+    function getSignerContract(string _idFile) public view isValidUser returns(address){
         return usingdatacontract[_idFile].signer;
     }
 
     //Get total contract of a file
-    function getContractPerFile(uint _idFile) public view isValidUser(msg.sender) returns(usingDataContract[]) {
+    function getContractPerFile(uint _idFile) public view isValidUser returns(usingDataContract[]) {
         return usingDataContractOfAData[_idFile];
     }
     // Create survey to collect infomation
@@ -219,7 +218,7 @@ contract userBehavior is FileStruct, Ownable {
         uint _endDay,
         uint _feePerASurvey,
         uint _surveyInDemand// the number of survey need to take
-    ) public isValidUser(msg.sender)  {
+    ) public isValidUser  {
         token.TransferFromTo(msg.sender, address(this), _feePerASurvey.mul(_surveyInDemand));
         idSurvey = idSurvey.add(1);
         Survey memory surveys = Survey(
@@ -239,7 +238,7 @@ contract userBehavior is FileStruct, Ownable {
     }
 
     //withdraw excess money from a survey
-    function withdrawExcessFromSurvey(uint _idSurvey) public isValidUser(msg.sender) {
+    function withdrawExcessFromSurvey(uint _idSurvey) public isValidUser {
         require(survey[_idSurvey].endDate < now,"Survey is still in process!");
         require(msg.sender == survey[_idSurvey].owner,"You aren't owner!");
         uint memory _excessMoney = (survey[_idFile].feePerASurvey.mul(survey[_idFile].surveyInDemand)).sub(survey[_idFile].feePerASurvey.mul(survey[_idFile].participatedPeople));
@@ -247,7 +246,7 @@ contract userBehavior is FileStruct, Ownable {
     }
 
     //take Survey
-    function takeSurvey(uint _idSurvey) public isValidUser(msg.sender){
+    function takeSurvey(uint _idSurvey) public isValidUser {
         require(survey[_idSurvey].endDate > now,"Survey is expired!");
         require(survey[_idSurvey].surveyInDemand < survey[_idSurvey].participatedPeople,"This survey is enough people!");
         survey[_idSurvey].participatedPeople = survey[_idSurvey].participatedPeople.add(1);
@@ -258,12 +257,12 @@ contract userBehavior is FileStruct, Ownable {
     }
 
     // Update latest ranking
-    function getRanking() public view isValidUser(msg.sender) returns(dataRanking[] memory) {
+    function getRanking() public view isValidUser returns(dataRanking[] memory) {
         dataRanking[] memory result = new dataRanking[](FileList.length);
         for (uint i = 0; i < FileList.length; i++){
             result[i] = dataRanking(FileList[i].idFile, FileList[i].totalUsed);
         }
-        for (uint i = 0; i < result.length -1 ; i++) {
+        for (uint i = 0; i < result.length - 1 ; i++) {
             uint memory totalused = result[i].totalUsed;
             for (uint j = i + 1; j < result.length ; j++) {
                 if (result[j].downloaded > totalused) {
@@ -288,7 +287,7 @@ contract userBehavior is FileStruct, Ownable {
         _isMarried,
         _phone,
         _shared
-    ) public isValidUser(msg.sender) {
+    ) public isValidUser {
         individualData memory _pIf = individualData(
             msg.sender,
             _idIdentity,
@@ -308,13 +307,13 @@ contract userBehavior is FileStruct, Ownable {
     }
 
     // get publish information
-    function getPersonalInformation() public view isValidUser(msg.sender) returns(individualData[] memory) {
+    function getPersonalInformation() public view isValidUser returns(individualData[] memory) {
         token.TransferFromTo(msg.sender,address(this),PData.length.mul(pDMoney));
         return PData;
     }
 
     // share personal information
-    function publishInformation() public isValidUser(msg.sender) {
+    function publishInformation() public isValidUser {
         require(msg.sender = UserList[msg.sender].ownerAddress,"this account is not set up");
         require(UserList[msg.sender].personalData.shared = false,"Your personal data is publish!");
         UserList[msg.sender].personalData.shared = true;
@@ -325,4 +324,3 @@ contract userBehavior is FileStruct, Ownable {
 }
 
 // check validality of user
-// 

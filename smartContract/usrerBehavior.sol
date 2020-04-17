@@ -1,4 +1,6 @@
 pragma solidity >=0.4.0 <0.7.0;
+pragma experimental ABIEncoderV2;
+
 import "./fileStruct.sol";
 import "./Ownable.sol";
 import "./safemath.sol";
@@ -24,8 +26,9 @@ contract userBehavior is FileStruct, Ownable {
     Feedback[] public _feedback;
     individualData[] public PData;
     File[] public FileList;
+    user[]  unvalidUser;
     mapping(uint => File) files;
-    mapping(address => User) UserList;
+    mapping(address => user) UserList;
     mapping(uint => Survey) survey;
     mapping(uint => usingDataContract[]) usingDataContractOfAData;
     mapping(uint => usingDataContract) usingdatacontract;
@@ -53,13 +56,13 @@ contract userBehavior is FileStruct, Ownable {
         uint _price,
         Kind _kind,
         string memory _idMongoose
-        ) public isValidUser(msg.sender) returns(uint) {
+        ) public isValidUser() returns(uint) {
         idFile++;
 
 
         File memory tempFile = File(idFile,_idMongoose,_fileHash,msg.sender,_price,0,0,now,false,_kind,0);
-        Filelist.push(tempFile);
-        UserList[msg.sender].uploadList.push(tempFile);
+        FileList.push(tempFile);
+        UserList[msg.sender].uploadList.push(tempFile.idFile);
         files[idFile] = tempFile;
         emit Log_uploadData(msg.sender,_kind,idFile);
         return idFile;
@@ -69,14 +72,14 @@ contract userBehavior is FileStruct, Ownable {
     function downloadData(uint _idFile) public isValidFile(_idFile) isValidUser returns(string memory) {
         require(files[_idFile].valid,"File haven't ready to download !");
         usingDataContract[] memory result;
-        for (uint i = 0; i < usingDataContractOfAData[_idFile]; i++) {
+        for (uint i = 0; i < usingDataContractOfAData[_idFile].length; i++) {
             if(usingDataContractOfAData[_idFile][i].signer == msg.sender && usingDataContractOfAData[_idFile][i].timeExpired > now){
-                result.push(usingDataContractOfAData[_idFile][i]);
+                result[i] = usingDataContractOfAData[_idFile][i];
             }
         }
-        if (result.length = 0) {
+        if (result.length == 0) {
             token.TransferFromTo(msg.sender, address(this),files[_idFile].price);
-            token.TransferFromTo(address(this), files[_idFile].owner, files[_idFile].price.mul(0.9));
+            token.TransferFromTo(address(this), files[_idFile].owner, files[_idFile].price.mul(90).div(100));
         }
         UserList[msg.sender].usedList.push(_idFile);
         files[_idFile].totalUsed = files[_idFile].totalUsed.add(1);
@@ -86,7 +89,7 @@ contract userBehavior is FileStruct, Ownable {
     }
 
     //Get owner of data
-    function getUserUpload(uint _idFile) public view isValidUser returns(user memory) {
+    function getUserUpload(uint _idFile) public view isValidUser returns(address) {
         return files[_idFile].owner;
     }
 
@@ -107,7 +110,7 @@ contract userBehavior is FileStruct, Ownable {
         address _signer,
         uint _signerCompensationAmount,
         uint _timeExpired
-    ) public isValidUser(msg.sender) {
+    ) public isValidUser() {
         require(msg.sender == _owner || msg.sender == _signer,"Check owner or signer !");
         require(_owner == files[_idFile].owner,"Check owner of data !");
         bool _ownerApproved;
@@ -154,7 +157,7 @@ contract userBehavior is FileStruct, Ownable {
         address(this),usingDataContractList[_idContractMongo].contractMoney);
         token.TransferFromTo(address(this),
         files[usingDataContractList[_idContractMongo].idFile].owner,
-        usingDataContractList[_idContractMongo].contractMoney.mul(0.9));
+        usingDataContractList[_idContractMongo].contractMoney.mul(90).div(100));
         usingDataContract memory mainContract = usingDataContract(
             idContract.add(1),
             usingDataContractList[_idContractMongo].idFile,
@@ -170,14 +173,14 @@ contract userBehavior is FileStruct, Ownable {
             usingDataContractList[_idContractMongo].timeExpired,
             usingDataContractList[_idContractMongo].isCancel
         );
-        usingDataContractOfAData[_idFile].push(mainContract);
+        usingDataContractOfAData[idFile].push(mainContract);
         usingdatacontract[mainContract.id] = mainContract;
-        emit Log_signUsingDataContract(_idFile, mainContract.owner, mainContract.signer);
+        emit Log_signUsingDataContract(idFile, mainContract.owner, mainContract.signer);
     }
 
     // Huỷ hợp đồng
     function cancelContract(uint _idFile) public isValidUser {
-        require(usingdatacontract[_idFile],"This contract not exist!");
+       // require(usingdatacontract[_idFile],"This contract not exist!");
         require(usingdatacontract[_idFile].isCancel == false && usingdatacontract[_idFile].timeExpired > now,
         "This contract has canceled already!");
         require(msg.sender == usingdatacontract[_idFile].signer || msg.sender == usingdatacontract[_idFile].owner,
@@ -203,18 +206,18 @@ contract userBehavior is FileStruct, Ownable {
     }
 
     //Get signer of using data contract
-    function getSignerContract(string _idFile) public view isValidUser returns(address){
+    function getSignerContract( uint _idFile) public view isValidUser returns(address){
         return usingdatacontract[_idFile].signer;
     }
 
     //Get total contract of a file
-    function getContractPerFile(uint _idFile) public view isValidUser returns(usingDataContract[]) {
+    function getContractPerFile(uint _idFile) public view isValidUser returns(usingDataContract[] memory) {
         return usingDataContractOfAData[_idFile];
     }
     // Create survey to collect infomation
     function createSurvey(
-        string _idMongoose,
-        string _contentHash,
+        string memory _idMongoose,
+        string memory _contentHash,
         uint _endDay,
         uint _feePerASurvey,
         uint _surveyInDemand// the number of survey need to take
@@ -241,7 +244,7 @@ contract userBehavior is FileStruct, Ownable {
     function withdrawExcessFromSurvey(uint _idSurvey) public isValidUser {
         require(survey[_idSurvey].endDate < now,"Survey is still in process!");
         require(msg.sender == survey[_idSurvey].owner,"You aren't owner!");
-        uint memory _excessMoney = (survey[_idFile].feePerASurvey.mul(survey[_idFile].surveyInDemand)).sub(survey[_idFile].feePerASurvey.mul(survey[_idFile].participatedPeople));
+        uint _excessMoney = (survey[_idSurvey].feePerASurvey.mul(survey[_idSurvey].surveyInDemand)).sub(survey[_idSurvey].feePerASurvey.mul(survey[_idSurvey].participatedPeople));
         token.TransferFromTo(address(this), msg.sender, _excessMoney);
     }
 
@@ -258,16 +261,16 @@ contract userBehavior is FileStruct, Ownable {
 
     // Update latest ranking
     function getRanking() public view isValidUser returns(dataRanking[] memory) {
-        dataRanking[] memory result = new dataRanking[](FileList.length);
+        dataRanking[] memory result;//= new dataRanking[](FileList.length);
         for (uint i = 0; i < FileList.length; i++){
             result[i] = dataRanking(FileList[i].idFile, FileList[i].totalUsed);
         }
         for (uint i = 0; i < result.length - 1 ; i++) {
-            uint memory totalused = result[i].totalUsed;
+            uint totalused = result[i].downloaded;
             for (uint j = i + 1; j < result.length ; j++) {
                 if (result[j].downloaded > totalused) {
                     totalused = result[j].downloaded;
-                    dataRanking temp = result[i];
+                    dataRanking memory temp = result[i];
                     result[i] = result[j];
                     result[j] = temp;
                 }
@@ -278,15 +281,15 @@ contract userBehavior is FileStruct, Ownable {
 
     // import personal information
     function setPersonalInformation(
-        _idIdentity,
-        _name,
-        _DoB,
-        _male,
-        _hobbies,
-        _addressLive,
-        _isMarried,
-        _phone,
-        _shared
+        uint _idIdentity,
+        string memory _name,
+        uint _DoB,
+        uint _male,
+        string memory _hobbies,
+        string memory _addressLive,
+        bool _isMarried,
+        uint _phone,
+        bool _shared
     ) public isValidUser {
         individualData memory _pIf = individualData(
             msg.sender,
@@ -307,20 +310,50 @@ contract userBehavior is FileStruct, Ownable {
     }
 
     // get publish information
-    function getPersonalInformation() public view isValidUser returns(individualData[] memory) {
+    function getPersonalInformation() public isValidUser returns(individualData[] memory) {
         token.TransferFromTo(msg.sender,address(this),PData.length.mul(pDMoney));
         return PData;
     }
 
     // share personal information
     function publishInformation() public isValidUser {
-        require(msg.sender = UserList[msg.sender].ownerAddress,"this account is not set up");
+        //require(msg.sender = UserList[msg.sender].ownerAddress,"this account is not set up");
         require(UserList[msg.sender].personalData.shared = false,"Your personal data is publish!");
         UserList[msg.sender].personalData.shared = true;
         PData.push(UserList[msg.sender].personalData);
         token.TransferFromTo(address(this),msg.sender,pDMoney);
         emit Log_sharingIndividualData(msg.sender);
     }
+
+    // create user
+    /** 
+        * @dev this function is to use in backend, when user start system, call this function immediately
+    */
+    function createUser() public {
+        //require(!UserList[msg.sender],"this address has had account!");
+        uint[] memory _uploadList;
+        uint[] memory _downloadList;
+        individualData memory Pdt;
+        user memory User = user(
+            msg.sender,
+            _uploadList,
+            _downloadList,
+            false,
+            0,
+            0,
+            0,
+            Pdt
+        );
+        unvalidUser.push(User);
+        UserList[msg.sender] = User;
+    }
+
+    function ValidateUser() public onlyOwner {
+        
+    }
 }
 
-// check validality of user
+// set lại cho một mảng là rỗng
+// set validality of user
+// set hợp lệ file
+// 1 HAK đổi ra ether chỗ nào

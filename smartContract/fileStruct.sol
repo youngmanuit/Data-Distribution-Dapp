@@ -61,7 +61,14 @@ contract FileStruct {
         uint phone;
         bool shared;
     }
-
+    
+    struct Feedback{
+        address ownerFeedback;
+        uint stars;
+        string comment;
+        uint idFile;
+    }
+    
     struct Survey{
         uint idSurvey;
         address owner;

@@ -4,8 +4,8 @@ contract FileStruct {
     enum Kind{text, audio, image}
 
     struct usingDataContract{
-        uint id;
-        uint idFile; // usingdata smartcontract Id
+        uint id; //id contract
+        uint idFile; // id File data
         string dataHash;
         string contentHash;
         uint contractMoney;
@@ -51,21 +51,21 @@ contract FileStruct {
 
     struct individualData{
         address owner;
-        uint idIdentity;
-        string name;
-        uint DoB;
-        uint male; // 1: male, 2: female, 3: other
-        string hobbies;
-        string addressLive;
-        bool isMerried;
-        uint phone;
+        string dataHash;
+        // uint idIdentity;
+        // string name;
+        // uint DoB;
+        // uint male; // 1: male, 2: female, 3: other
+        // string hobbies;
+        // string addressLive;
+        // bool isMerried;
+        // uint phone;
         bool shared;
     }
     
     struct Feedback{
         address ownerFeedback;
-        uint stars;
-        string comment;
+        string idMongo;//id in Mongo database to view content
         uint idFile;
     }
     
@@ -80,5 +80,15 @@ contract FileStruct {
         uint surveyInDemand; // the number of survey need to take
         uint participatedPeople;
 
+    }
+    
+    struct huntedFile{
+        uint idhuntFile;
+        uint idhuntedFile;
+        address peopleInNeed;
+        string characteristicHash;
+        address hunter;
+        uint fee;
+        bool isHunted;
     }
 }

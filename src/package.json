@@ -1,0 +1,36 @@
+{
+  "name": "src",
+  "version": "1.0.0",
+  "description": "",
+  "main": "index.js",
+  "scripts": {
+    "test": "echo \"Error: no test specified\" && exit 1"
+  },
+  "author": "duytra",
+  "license": "ISC",
+  "dependencies": {
+    "axios": "^0.19.2",
+    "bcrypt": "^4.0.1",
+    "body-parser": "^1.19.0",
+    "cors": "^2.8.5",
+    "ethers": "^4.0.47",
+    "express": "^4.17.1",
+    "express-fileupload": "^1.1.7-alpha.3",
+    "file-type": "^14.2.0",
+    "filereader": "^0.10.3",
+    "form-data": "^3.0.0",
+    "got": "^11.0.2",
+    "helmet": "^3.22.0",
+    "http": "0.0.1-security",
+    "ipfs": "^0.43.0",
+    "jsonwebtoken": "^8.5.1",
+    "moment": "^2.24.0",
+    "mongoose": "^5.9.10",
+    "node-fetch": "^2.6.0",
+    "path": "^0.12.7",
+    "request": "^2.88.2",
+    "sha256": "^0.2.0",
+    "socket.io": "^2.3.0",
+    "validator": "^13.0.0"
+  }
+}

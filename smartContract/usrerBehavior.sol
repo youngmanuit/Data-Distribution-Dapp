@@ -14,25 +14,29 @@ contract userBehavior is FileStruct, Ownable {
     event Log_cancelContract(uint id, address canceler);
     event Log_createSurveySuccessfully(address owner, uint idSurvey);
     event Log_takenSurveySuccessfully(address people, uint idSurvey);
+    event Log_takenFeedbackSuccessfully(uint idFile);
     event Log_sharingIndividualData(address indexed owner);
     event Log_withdraw(address recipient, uint amount);
+    event huntEventSuccessfully(address indexed _peopleInNeed, address indexed _hunter);
 
     Token token;
 
     uint idFile = 0;
     uint idSurvey = 0;
     uint idContract = 0;
-    uint pDMoney;
-    Feedback[] public _feedback;
-    individualData[] public PData;
-    File[] public FileList;
-    user[]  unvalidUser;
+    uint pDMoney = 0;
+    uint idHuntfile;
+    individualData[] PData;
+    File[]  FileList;
+    huntedFile[] huntedfiles;
     mapping(uint => File) files;
     mapping(address => user) UserList;
     mapping(uint => Survey) survey;
     mapping(uint => usingDataContract[]) usingDataContractOfAData;
     mapping(uint => usingDataContract) usingdatacontract;
-    mapping (string=>usingDataContract) usingDataContractList;
+    mapping(string => usingDataContract) usingDataContractList;
+    mapping(uint => Feedback[]) feedback;
+    mapping(uint => huntedFile) huntedfile;
 
     modifier isValidFile(uint _idFile) {
         require(files[_idFile].valid,"File haven't validated yet !");
@@ -42,12 +46,15 @@ contract userBehavior is FileStruct, Ownable {
         require(UserList[msg.sender].isValid,"User haven't actived");
         _;
     }
+    
+    //Set địa chỉ Token
 
-    function setTokenAddress(address _token) public onlyOwner isValidUser {
+    function setTokenAddress(address _token) public onlyOwner {
         token = Token(_token);
     }
-
-    function setDataSharingCommision(uint _pDMoney) public onlyOwner isValidUser {
+    
+    // Set amount money user will receive when sharing personal data 
+    function setDataSharingCommision(uint _pDMoney) public onlyOwner {
         pDMoney = _pDMoney;
     }
     // Upload data
@@ -56,9 +63,8 @@ contract userBehavior is FileStruct, Ownable {
         uint _price,
         Kind _kind,
         string memory _idMongoose
-        ) public isValidUser() returns(uint) {
-        idFile++;
-
+        ) public isValidUser returns(uint) {
+        idFile = idFile.add(1);
 
         File memory tempFile = File(idFile,_idMongoose,_fileHash,msg.sender,_price,0,0,now,false,_kind,0);
         FileList.push(tempFile);
@@ -67,19 +73,31 @@ contract userBehavior is FileStruct, Ownable {
         emit Log_uploadData(msg.sender,_kind,idFile);
         return idFile;
     }
+    function getLengh(uint _idFile) public view returns(uint){
+        return usingDataContractOfAData[_idFile].length;
+    }
+    
 
     // Using data
     function downloadData(uint _idFile) public isValidFile(_idFile) isValidUser returns(string memory) {
-        require(files[_idFile].valid,"File haven't ready to download !");
-        usingDataContract[] memory result;
+        bool hasContract = false;
+        bool isHuntedFile = false;
         for (uint i = 0; i < usingDataContractOfAData[_idFile].length; i++) {
             if(usingDataContractOfAData[_idFile][i].signer == msg.sender && usingDataContractOfAData[_idFile][i].timeExpired > now){
-                result[i] = usingDataContractOfAData[_idFile][i];
+                hasContract = true;
+                break;
             }
         }
-        if (result.length == 0) {
+        for (uint i = 0; i < huntedfiles.length; i++) {
+            if(huntedfiles[i].peopleInNeed == msg.sender && huntedfiles[i].isHunted == true){
+                isHuntedFile = true;
+                break;
+            }
+        }
+        
+        if (hasContract == false && isHuntedFile == false) {
             token.TransferFromTo(msg.sender, address(this),files[_idFile].price);
-            token.TransferFromTo(address(this), files[_idFile].owner, files[_idFile].price.mul(90).div(100));
+            token.TransferFromTo(address(this), files[_idFile].owner, files[_idFile].price);
         }
         UserList[msg.sender].usedList.push(_idFile);
         files[_idFile].totalUsed = files[_idFile].totalUsed.add(1);
@@ -87,17 +105,7 @@ contract userBehavior is FileStruct, Ownable {
         emit Log_downloadFile(msg.sender, _idFile);
         return files[_idFile].fileHash;
     }
-
-    //Get owner of data
-    function getUserUpload(uint _idFile) public view isValidUser returns(address) {
-        return files[_idFile].owner;
-    }
-
-    //Get file by idFile
-    function getFileById(uint _idFile) public view isValidUser  returns(File memory) {
-        return files[_idFile];
-    }
-
+    
     // Create contract
     function createContract(
         uint _idFile,
@@ -110,7 +118,7 @@ contract userBehavior is FileStruct, Ownable {
         address _signer,
         uint _signerCompensationAmount,
         uint _timeExpired
-    ) public isValidUser() {
+    ) public isValidUser isValidFile(_idFile) {
         require(msg.sender == _owner || msg.sender == _signer,"Check owner or signer !");
         require(_owner == files[_idFile].owner,"Check owner of data !");
         bool _ownerApproved;
@@ -158,8 +166,9 @@ contract userBehavior is FileStruct, Ownable {
         token.TransferFromTo(address(this),
         files[usingDataContractList[_idContractMongo].idFile].owner,
         usingDataContractList[_idContractMongo].contractMoney.mul(90).div(100));
+        idContract = idContract.add(1);
         usingDataContract memory mainContract = usingDataContract(
-            idContract.add(1),
+            idContract,
             usingDataContractList[_idContractMongo].idFile,
             usingDataContractList[_idContractMongo].dataHash,
             usingDataContractList[_idContractMongo].contentHash,
@@ -179,41 +188,22 @@ contract userBehavior is FileStruct, Ownable {
     }
 
     // Huỷ hợp đồng
-    function cancelContract(uint _idFile) public isValidUser {
-       // require(usingdatacontract[_idFile],"This contract not exist!");
-        require(usingdatacontract[_idFile].isCancel == false && usingdatacontract[_idFile].timeExpired > now,
+    function cancelContract(uint _idContract) public isValidUser {
+       // require(usingdatacontract[_idContract],"This contract not exist!");
+        require(usingdatacontract[_idContract].isCancel == false && usingdatacontract[_idContract].timeExpired > now,
         "This contract has canceled already!");
-        require(msg.sender == usingdatacontract[_idFile].signer || msg.sender == usingdatacontract[_idFile].owner,
+        require(msg.sender == usingdatacontract[_idContract].signer || msg.sender == usingdatacontract[_idContract].owner,
         "You don't have this privilege");
-        if(msg.sender == usingdatacontract[_idFile].owner){
-            token.TransferFromTo(usingdatacontract[_idFile].owner,usingdatacontract[_idFile].signer, usingdatacontract[_idFile].ownerCompensationAmount);
+        if(msg.sender == usingdatacontract[_idContract].owner){
+            token.TransferFromTo(usingdatacontract[_idContract].owner,usingdatacontract[_idContract].signer, usingdatacontract[_idContract].ownerCompensationAmount);
         }
-        if(msg.sender == usingdatacontract[_idFile].signer){
-            token.TransferFromTo(usingdatacontract[_idFile].signer,usingdatacontract[_idFile].owner, usingdatacontract[_idFile].signerCompensationAmount);
+        if(msg.sender == usingdatacontract[_idContract].signer){
+            token.TransferFromTo(usingdatacontract[_idContract].signer,usingdatacontract[_idContract].owner, usingdatacontract[_idContract].signerCompensationAmount);
         }
-        usingdatacontract[_idFile].isCancel = true;
-        emit Log_cancelContract(usingdatacontract[_idFile].id, msg.sender);
+        usingdatacontract[_idContract].isCancel = true;
+        emit Log_cancelContract(usingdatacontract[_idContract].id, msg.sender);
     }
-
-    // Get using data contract
-    function getUsingDataContract(uint _idFile) public view isValidUser returns(usingDataContract memory) {
-        return usingdatacontract[_idFile];
-    }
-
-    // Get owner of using data contract
-    function getOwnerContract(uint _idFile) public view isValidUser returns(address){
-        return usingdatacontract[_idFile].owner;
-    }
-
-    //Get signer of using data contract
-    function getSignerContract( uint _idFile) public view isValidUser returns(address){
-        return usingdatacontract[_idFile].signer;
-    }
-
-    //Get total contract of a file
-    function getContractPerFile(uint _idFile) public view isValidUser returns(usingDataContract[] memory) {
-        return usingDataContractOfAData[_idFile];
-    }
+    
     // Create survey to collect infomation
     function createSurvey(
         string memory _idMongoose,
@@ -251,17 +241,45 @@ contract userBehavior is FileStruct, Ownable {
     //take Survey
     function takeSurvey(uint _idSurvey) public isValidUser {
         require(survey[_idSurvey].endDate > now,"Survey is expired!");
-        require(survey[_idSurvey].surveyInDemand < survey[_idSurvey].participatedPeople,"This survey is enough people!");
+        require(survey[_idSurvey].surveyInDemand > survey[_idSurvey].participatedPeople,"This survey is enough people!");
         survey[_idSurvey].participatedPeople = survey[_idSurvey].participatedPeople.add(1);
         UserList[msg.sender].activity = UserList[msg.sender].activity.add(1);
         token.TransferFromTo(address(this), msg.sender, survey[_idSurvey].feePerASurvey);
 
         emit Log_takenSurveySuccessfully(msg.sender, _idSurvey);
     }
-
+    
+    // take Feedback
+    function takeFeedback(string memory _idMongo, uint _idFile) public isValidUser {
+        bool hasFile;
+        for(uint i =0; i < UserList[msg.sender].usedList.length; i++){
+            if(_idFile == UserList[msg.sender].usedList[i]){
+                hasFile = true;
+                break;
+            }
+        }
+        require(hasFile,'You have not used this data');
+        Feedback memory _fb = Feedback(
+            msg.sender,
+            _idMongo,
+            _idFile
+        );
+        feedback[_idFile].push(_fb);
+        emit Log_takenFeedbackSuccessfully(_idFile);
+    }
+    
+    // getFeedback
+    function getFeedback(uint _idFile) public view isValidUser returns(string[] memory) {
+        string[] memory hashMongo = new string[](feedback[_idFile].length);
+        for(uint i =0;i< feedback[_idFile].length;i++){
+            hashMongo[i] = feedback[_idFile][i].idMongo;
+        }
+        return hashMongo;
+    }
+    
     // Update latest ranking
     function getRanking() public view isValidUser returns(dataRanking[] memory) {
-        dataRanking[] memory result;//= new dataRanking[](FileList.length);
+        dataRanking[] memory result = new dataRanking[](FileList.length);
         for (uint i = 0; i < FileList.length; i++){
             result[i] = dataRanking(FileList[i].idFile, FileList[i].totalUsed);
         }
@@ -277,30 +295,53 @@ contract userBehavior is FileStruct, Ownable {
             }
         }
         return result;
-        }
+    }
+    
+    //Post huntFile to find data 
+    function postHuntFile(string memory _characteristicHash, uint _fee) public isValidUser{
+        idHuntfile.add(1);
+        huntedFile memory _hf = huntedFile(
+            idHuntfile,
+            0,
+            msg.sender,
+            _characteristicHash,
+            address(0),
+            _fee,
+            false
+        );
+        huntedfiles.push(_hf);
+        huntedfile[idHuntfile] = _hf;
+    }
+    
+    function getHuntFile() public view isValidUser returns(huntedFile[] memory){
+        return huntedfiles;
+    }
+    
+    function hunt(uint _idHuntFile, uint _idHuntedFile) public isValidFile(_idHuntedFile) isValidUser{
+        require(huntedfile[_idHuntFile].isHunted == false, "File is no longer need ");
+        require(huntedfile[_idHuntFile].hunter == msg.sender,"You have no right to hunt");
+        require(files[_idHuntedFile].owner == msg.sender,"You are not owner of this file!");
+        huntedfile[_idHuntFile].idhuntedFile = _idHuntedFile;
+    }
+    
+    function approveHuntedFile(uint _idHuntFile) public isValidUser{
+        require(huntedfile[_idHuntFile].peopleInNeed == msg.sender,"You have no right to approve!");
+        require(huntedfile[_idHuntFile].idhuntedFile != 0);
+        huntedfile[_idHuntFile].isHunted = true;
+        token.TransferFromTo(huntedfile[_idHuntFile].peopleInNeed, huntedfile[_idHuntFile].hunter, huntedfile[_idHuntFile].fee);
+        emit huntEventSuccessfully(huntedfile[_idHuntFile].peopleInNeed, huntedfile[_idHuntFile].hunter);
+    }
+        
 
     // import personal information
     function setPersonalInformation(
-        uint _idIdentity,
-        string memory _name,
-        uint _DoB,
-        uint _male,
-        string memory _hobbies,
-        string memory _addressLive,
-        bool _isMarried,
-        uint _phone,
+        string memory _dataHash,
         bool _shared
     ) public isValidUser {
+        require(pDMoney != 0,"The commision is not set");
         individualData memory _pIf = individualData(
             msg.sender,
-            _idIdentity,
-            _name,
-            _DoB,
-            _male,
-            _hobbies,
-            _addressLive,
-            _isMarried,
-            _phone,
+            _dataHash,
             _shared
         );
         if(_pIf.shared == true){
@@ -311,26 +352,65 @@ contract userBehavior is FileStruct, Ownable {
 
     // get publish information
     function getPersonalInformation() public isValidUser returns(individualData[] memory) {
+        require(PData.length > 0,"No data is published");
+        require(pDMoney != 0,"The commision is not set");
         token.TransferFromTo(msg.sender,address(this),PData.length.mul(pDMoney));
         return PData;
     }
 
     // share personal information
     function publishInformation() public isValidUser {
-        //require(msg.sender = UserList[msg.sender].ownerAddress,"this account is not set up");
-        require(UserList[msg.sender].personalData.shared = false,"Your personal data is publish!");
+        require(UserList[msg.sender].personalData.owner == msg.sender,"this account is not set up");
+        require(UserList[msg.sender].personalData.shared == false,"Your personal data is publish!");
         UserList[msg.sender].personalData.shared = true;
         PData.push(UserList[msg.sender].personalData);
         token.TransferFromTo(address(this),msg.sender,pDMoney);
         emit Log_sharingIndividualData(msg.sender);
     }
 
+    
+    /**
+     * view function
+    */
+    function get() public view isValidUser returns(address, bool){
+        return (UserList[msg.sender].personalData.owner,UserList[msg.sender].personalData.shared);
+    }
+    //Get owner of data
+    function getUserUpload(uint _idFile) public view isValidUser returns(address) {
+        return files[_idFile].owner;
+    }
+
+    //Get file by idFile
+    function getFileById(uint _idFile) public view isValidUser  returns(string memory,File memory, bool) {
+        return (files[_idFile].idMongoose,files[_idFile],files[_idFile].valid) ;
+    }
+
+    // Get using data contract
+    function getUsingDataContract(uint _idcontract) public view isValidUser returns(usingDataContract memory) {
+        return usingdatacontract[_idcontract];
+    }
+
+    // Get owner of using data contract
+    function getOwnerContract(uint _idcontract) public view isValidUser returns(address){
+        return usingdatacontract[_idcontract].owner;
+    }
+
+    //Get signer of using data contract
+    function getSignerContract( uint _idFile) public view isValidUser returns(address){
+        return usingdatacontract[_idFile].signer;
+    }
+
+    //Get total contract of a file
+    function getContractPerFile(uint _idFile) public view isValidUser returns(uint) {
+        return usingDataContractOfAData[_idFile].length;
+    }
+    
     // create user
     /** 
         * @dev this function is to use in backend, when user start system, call this function immediately
     */
     function createUser() public {
-        //require(!UserList[msg.sender],"this address has had account!");
+        require(UserList[msg.sender].ownerAddress == 0x0000000000000000000000000000000000000000,"this address has had account!");
         uint[] memory _uploadList;
         uint[] memory _downloadList;
         individualData memory Pdt;
@@ -344,12 +424,22 @@ contract userBehavior is FileStruct, Ownable {
             0,
             Pdt
         );
-        unvalidUser.push(User);
         UserList[msg.sender] = User;
     }
 
-    function ValidateUser() public onlyOwner {
-        
+    function validateUser(address _addressUserToValidate) public onlyOwner {
+        require(UserList[_addressUserToValidate].ownerAddress != 0x0000000000000000000000000000000000000000,"this address hasn't created!");
+        require(UserList[_addressUserToValidate].isValid == false, "This account has already validated ");
+        UserList[_addressUserToValidate].isValid = true;
+    }
+    
+    function validateFile(uint _idFile) public onlyOwner {
+        require(files[_idFile].owner != 0x0000000000000000000000000000000000000000,"This file is not exist");
+        require(files[_idFile].valid == false, "This file has already validated");
+        files[_idFile].valid = true;
+    }
+    function getUserlist() public view returns(address, bool){
+        return (UserList[msg.sender].ownerAddress, UserList[msg.sender].isValid);
     }
 }
 

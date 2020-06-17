@@ -17,4 +17,3 @@ module.exports = async (req, res) => {
         response_express.exception(res, err)
     })
 }
-© 2020 GitHub, Inc.

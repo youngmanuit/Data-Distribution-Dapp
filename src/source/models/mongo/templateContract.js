@@ -1,18 +1,26 @@
 var mongoose = require('mongoose');
 
 var templateContractSchema = mongoose.Schema({
-    ownerID: { type: mongoose.Schema.Types.ObjectId, ref: 'User' },
+    ownerID: { 
+        type: mongoose.Schema.Types.ObjectId,
+        ref: 'User' 
+    },
+
     date_created: {
         type: Date,
         default: Date(Date.now()),
     },
+
     date_updated: {
         type: Date,
         default : Date(Date.now()),
     },
+
     content: {
         type: String,
+        require: true
     },
+
     nameContractForm: {
         type: String,
     }

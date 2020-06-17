@@ -70,7 +70,8 @@ const FileType = require('file-type');
 // });
 
 
-axios.get(`https://ipfs.io/ipfs/QmZimW456PmaUy5SLjfGPKxPUXmHSm7zAQoGruV9c8UD2U`)
+axios.get(`https://ipfs.io/ipfs/QmZimW456PmaUy5SLjfGPKxPUXmH
+Sm7zAQoGruV9c8UD2U`)
 .then(function (response) {
 
     console.log(Object.keys(response)); // Outputs ["a","b","c"]

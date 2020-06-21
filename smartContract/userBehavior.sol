@@ -29,6 +29,7 @@ contract userBehavior is FileStruct, Ownable {
     individualData[] PData;
     File[]  FileList;
     huntedFile[] huntedfiles;
+    UnlabelFile[] unlabelfiles;
     mapping(uint => File) files;
     mapping(address => user) UserList;
     mapping(uint => Survey) survey;
@@ -37,6 +38,7 @@ contract userBehavior is FileStruct, Ownable {
     mapping(string => usingDataContract) usingDataContractList;
     mapping(uint => Feedback[]) feedback;
     mapping(uint => huntedFile) huntedfile;
+    mapping(uint => UnlabelFile) unlabelfile;
 
     modifier isValidFile(uint _idFile) {
         require(files[_idFile].valid,"File haven't validated yet !");
@@ -244,6 +246,7 @@ contract userBehavior is FileStruct, Ownable {
         require(survey[_idSurvey].surveyInDemand > survey[_idSurvey].participatedPeople,"This survey is enough people!");
         survey[_idSurvey].participatedPeople = survey[_idSurvey].participatedPeople.add(1);
         UserList[msg.sender].activity = UserList[msg.sender].activity.add(1);
+        
         token.TransferFromTo(address(this), msg.sender, survey[_idSurvey].feePerASurvey);
 
         emit Log_takenSurveySuccessfully(msg.sender, _idSurvey);
@@ -319,9 +322,9 @@ contract userBehavior is FileStruct, Ownable {
     
     function hunt(uint _idHuntFile, uint _idHuntedFile) public isValidFile(_idHuntedFile) isValidUser{
         require(huntedfile[_idHuntFile].isHunted == false, "File is no longer need ");
-        require(huntedfile[_idHuntFile].hunter == msg.sender,"You have no right to hunt");
         require(files[_idHuntedFile].owner == msg.sender,"You are not owner of this file!");
         huntedfile[_idHuntFile].idhuntedFile = _idHuntedFile;
+        huntedfile[_idHuntFile].hunter = msg.sender;
     }
     
     function approveHuntedFile(uint _idHuntFile) public isValidUser{
@@ -366,6 +369,55 @@ contract userBehavior is FileStruct, Ownable {
         PData.push(UserList[msg.sender].personalData);
         token.TransferFromTo(address(this),msg.sender,pDMoney);
         emit Log_sharingIndividualData(msg.sender);
+    }
+    
+    // Find people lable data
+    function FindLabler(uint _idFile, uint _wage) public isValidUser {
+        bool hasContract = false;
+        bool isDownloaded = false;
+        for (uint i = 0; i < usingDataContractOfAData[_idFile].length; i++) {
+            if(usingDataContractOfAData[_idFile][i].signer == msg.sender && usingDataContractOfAData[_idFile][i].timeExpired > now){
+                hasContract = true;
+                break;
+            }
+        }
+        
+        for(uint i=0; i < UserList[msg.sender].usedList.length; i++){
+            if(UserList[msg.sender].usedList[i] == _idFile){
+                isDownloaded = true;
+                break;
+            }
+        }
+        require(msg.sender == files[_idFile].owner || hasContract == true || isDownloaded == true);
+        UnlabelFile memory _uf = UnlabelFile(
+            _idFile,
+            "",
+            _wage,
+            msg.sender,
+            address(0),
+            false,
+            false
+        );
+        unlabelfiles.push(_uf);
+        unlabelfile[idFile]=_uf;
+    }
+    function getUnlableFile() public view isValidUser returns(UnlabelFile[] memory){
+        return unlabelfiles;
+    }
+    
+    function Labeling(uint _idUnlabelFile, string memory _hashFile) public isValidUser{
+        require(unlabelfile[_idUnlabelFile].isLabeled == false || unlabelfile[_idUnlabelFile].locked == false, "File is no longer need label");
+        unlabelfile[_idUnlabelFile].implementer = msg.sender;
+        unlabelfile[_idUnlabelFile].hashLabeledFile = _hashFile;
+        unlabelfile[_idUnlabelFile].locked = true;
+    }
+    
+    function approveLabeledFile(uint _idUnlabelFile) public isValidUser returns(string memory){
+        require(unlabelfile[_idUnlabelFile].renter == msg.sender,"You have no right to approve!");
+        require(unlabelfile[_idUnlabelFile].locked = true,"Haven't labeled yet!");
+        unlabelfile[_idUnlabelFile].isLabeled = true;
+        token.TransferFromTo(unlabelfile[_idUnlabelFile].renter, unlabelfile[_idUnlabelFile].implementer, unlabelfile[_idUnlabelFile].wage);
+        return unlabelfile[_idUnlabelFile].hashLabeledFile;
     }
 
     

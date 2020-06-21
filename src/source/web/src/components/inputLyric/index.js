@@ -50,7 +50,7 @@ export default class InputLyric extends React.Component {
     <div>
       <Tooltip title="Edit lyric" placement="leftTop">
         <Button disabled={this.props.disabled} ghost type="danger" icon="edit" onClick={this.showModal}>
-          <Text>Edit lyric</Text>
+          <Text>Edit Description</Text>
         </Button>
       </Tooltip>
       <Modal

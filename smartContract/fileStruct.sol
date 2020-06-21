@@ -32,10 +32,20 @@ contract FileStruct {
         Kind kind;
         uint feedback;
     }
+    
+    struct UnlabelFile{
+        uint idFile;
+        string hashLabeledFile;
+        uint wage;
+        address renter;
+        address implementer;
+        bool locked;
+        bool isLabeled;
+    }
 
     struct dataRanking{
-        uint idFile;
-        uint downloaded;
+            uint idFile;
+            uint downloaded;
     }
 
     struct user{
@@ -74,6 +84,7 @@ contract FileStruct {
         address owner;
         string idMongoose;
         string contentHash;
+        
         uint startDate;
         uint endDate;
         uint feePerASurvey;

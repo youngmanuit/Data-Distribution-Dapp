@@ -29,16 +29,16 @@ const CollectionCreateForm =
         return (
           <Modal
             visible={visible}
-            title="Using ISO"
+            title="Find Labeler"
             okText="Submit"
             onCancel={onCancel}
             onOk={onCreate}
           >
             <Form layout="horizontal">
 
-              <Form.Item label="Offer Percent">
+              <Form.Item label="Fee">
                 {getFieldDecorator('offerPercent', {
-                  rules: [{ required: true, message: 'Please input cost of this song!'}],
+                  rules: [{ required: true, message: 'Please input fee of this assignment!'}],
                   initialValue: 5000
                 })(
                   <InputNumber 
@@ -51,7 +51,7 @@ const CollectionCreateForm =
                 )}
               </Form.Item>
 
-              <Form.Item label="Offer Amount">
+              {/* <Form.Item label="Offer Amount">
                 {getFieldDecorator('offerAmount', {
                   rules: [{ required: true, message: 'Please input cost of this song!'}],
                   initialValue: 1000000
@@ -78,17 +78,17 @@ const CollectionCreateForm =
                       formatter={value => `🕗 ${value}`.replace(/\B(?=(\d{3})+(?!\d))/g, ',')}
                       parser={value => value.replace(/🕗\s?|(,*)/g, '')}
                     />
-                  )}
+                  )} */}
                 {/* <span className="ant-form-text"> second</span>
                 <span className="ant-form-text">➜ {moment(moment.duration(this.state.date, 'seconds')).format("YYYY-MM-DD hh:mm:ss")}</span> */}
-              </Form.Item>
+              {/* </Form.Item> */}
               
             </Form>
           </Modal>
         );
       }
     }
-
+const WrappedLogin = Form.create()(CollectionCreateForm)
 class UsingISO extends React.Component {
   state = {
     visible: false,
@@ -142,17 +142,17 @@ class UsingISO extends React.Component {
     return (
       <div>
         {this.props.circle ? 
-          <Tooltip title="Using ISO this song" placement="top">
+          <Tooltip title="Find labeler for this dataset" placement="top">
             <Button disabled={this.props.disabled} shape="circle" type="danger" ghost icon="usergroup-add" onClick={this.showModal}/>
           </Tooltip>
           :
-          <Tooltip title="Using ISO this song" placement="leftTop">
+          <Tooltip title="Find labeler for this dataset" placement="leftTop">
             <Button disabled={this.props.disabled} type="danger" ghost icon="usergroup-add" onClick={this.showModal}>
-              <Text>Using ISO</Text>
+              <Text>Labeling</Text>
             </Button>
           </Tooltip>
       }
-        <CollectionCreateForm
+        <WrappedLogin
           wrappedComponentRef={this.saveFormRef}
           visible={this.state.visible}
           onCancel={this.handleCancel}

@@ -12,7 +12,9 @@ import {
   Typography,
   Table,
   Progress,
-  Statistic
+  Statistic,
+  Form,
+  Input
 } from 'antd';
 import * as moment from 'moment';
 import MusicPlayerMainContent from '../../components/musicPlayer/musicPlayerMainContent';
@@ -53,7 +55,7 @@ class SongContent extends React.Component {
 
   render() {
     const {songInfo, songSameSingerData, relatedUserData, error} = this.props.songReducer
-    if (error) return (<Component404 history={this.props.history} subTitle="Song not found. Please try another link!"></Component404>)
+    if (error) return (<Component404 history={this.props.history} subTitle="Dataset not found. Please try another link!"></Component404>)
     if (!songInfo) return (<ComponentLoading/>)
     const columns = [
       {
@@ -64,13 +66,13 @@ class SongContent extends React.Component {
         render: address => <Button  style={{textAlign: 'left', padding: 0}}  type="link" onClick={() => this.props.history.push(`/page/${address}`)}>{address}</Button>
       },
       {
-        title: 'Invest percent',
+        title: '',
         dataIndex: 'percentage',
         key: 'percent',
         render: percent => <Text>{parseFloat(percent / 1000).toFixed(3)} %</Text>,
       },
       {
-        title: 'Invest Amount',
+        title: '',
         dataIndex: 'amount',
         key: 'amount',
         render: amount => <Text>{formatThousands(amount)} HAK</Text>,
@@ -81,7 +83,7 @@ class SongContent extends React.Component {
         <Row gutter={[0, 32]}>
           <Col span={18}>
             <Row>
-              <MusicPlayerMainContent musicHash={songInfo.hash} imageHash={songInfo.image} isDetail/>
+              {/* <MusicPlayerMainContent musicHash={songInfo.hash} imageHash={songInfo.image} isDetail/> */}
             </Row>
             <Row style={{padding: 5, margin: 5}}>
               <Col span={8}>
@@ -114,7 +116,7 @@ class SongContent extends React.Component {
                   <TextText title='Download Total' content={songInfo.totalDownloader}/>
                   <TextText title='Download Week' content={songInfo.weekDownloader}/>
                   <TextText title='Contract Permission' content={songInfo.contractPermission ? 'Allow' : 'Not Allow' }/>
-                  <TextText title='ISO' content={!songInfo.IsISO ? 'Not Use' : (moment().unix() >= songInfo.timeExpired ? 'Used' : 'Now Using')} link='link here'/>
+                  <TextText title='Labeling' content={!songInfo.IsISO ? 'Not Use' : (moment().unix() >= songInfo.timeExpired ? 'Used' : 'Now Using')} link='link here'/>
                 </Row>
               </Col>
               <Col span={16}>
@@ -126,13 +128,13 @@ class SongContent extends React.Component {
                     <BuyMusic idFile={songInfo.idFile}/>
                 </Row>
                 <Row style={{padding: 5, marginTop: 20 }}>
-                  <Title level={4} type="secondary"> LYRIC  </Title>
+                  <Title level={4} type="secondary"> DESCRIPTION  </Title>
                   <div style={{width: '100%', maxHeight: 250, backgroundColor: 'rgb(239, 242, 245)', overflow: 'auto'}}>
                     <div style={{padding: 5, margin: 5}} dangerouslySetInnerHTML={{__html: songInfo.lyric}} />
                   </div>
                 </Row>
                 <Row style={{padding: 3, marginTop: 20}}>
-                  <Title level={4} type="secondary"> INITIAL SONG OFFERING (ISO) INFOMATION </Title>
+                  <Title level={4} type="secondary"> LABELING INFOMATION </Title>
                   {songInfo.IsISO ? 
                   <div>
                   <Countdown valueStyle={{fontSize: '17px', textAlign: 'center', margin: '5px'}} value={songInfo.timeExpired * 1000} format="D Ngày H Giờ m Phút s" />
@@ -146,18 +148,22 @@ class SongContent extends React.Component {
                     status="active"
                     showInfo
                   />
-                  <TextText title='Progress' content={formatThousands(songInfo.offerAmount - songInfo.amountRemaining) + ' / ' + formatThousands(songInfo.offerAmount) + ' HAK'}/>
-                  <TextText title='Total Offer Amount' content={formatThousands(songInfo.offerAmount) + ' HAK'}/>
-                  <TextText title='Total Offer Percent' content={parseFloat(songInfo.offerPercent / 1000).toFixed(3) + '%'}/>
+                  {/* <TextText title='Progress' content={formatThousands(songInfo.offerAmount - songInfo.amountRemaining) + ' / ' + formatThousands(songInfo.offerAmount) + ' DIV'}/> */}
+                  <TextText title='Fee' content={formatThousands(songInfo.offerAmount) + ' DIV'}/>
+                  {/* <TextText title='Total Offer Percent' content={parseFloat(songInfo.offerPercent / 1000).toFixed(3) + '%'}/>
                   <TextText title='Amount Remaining' content={formatThousands(songInfo.amountRemaining) + ' HAK'}/>
-                  <TextText title='Owner Percent Remaining' content={parseFloat(songInfo.ownerPercent / 1000).toFixed(3) + '%'}/>
-                  <TextText title='Invest table' content=''/>
+                  <TextText title='Owner Percent Remaining' content={parseFloat(songInfo.ownerPercent / 1000).toFixed(3) + '%'}/> */}
+                  <TextText title='Labeler' content=''/>
                   <Table rowKey={(record) => record.idFile} columns={columns} dataSource={songInfo.investListISO} pagination={false}/>
                   </div>
                   :
                   <Text> This song is not using ISO yet. </Text>
                   }
                 </Row>
+                </Col>
+                </Row>
+                <Row>
+                <Col>
                 <Row style={{padding: 5, marginTop: 20 }}>
                   <Row >
                     <Button style={{textAlign: 'left', padding: 0, fontSize: '20px'}}  type="link" onClick={() => {}}>
@@ -202,6 +208,27 @@ class SongContent extends React.Component {
                         <Col span={8} style={{ marginTop: 20}}><StyleLoadingCardUser/></Col>
                       </React.Fragment>
                     }
+                  </Row>
+
+                </Row>
+                <Row style={{padding: 5, marginTop: 20 }}>
+                  <Row >
+                    <Button style={{textAlign: 'left', padding: 0, fontSize: '20px'}}  type="link" onClick={() => {}}>
+                      <Title level={4} type="secondary"><b>FEEDBACK</b></Title>
+                    </Button>
+                  </Row>
+
+                  <Row gutter={[8, 0]} type="flex" justify="space-around">
+                    <Form layout="inline" onSubmit={this.handleSubmit}>
+                    <Form.Item>
+                        <Input style={{width:"100%"}} placeholder="Write some words..."/>
+                      </Form.Item>
+                      <Form.Item>
+                        <Button type="primary" htmlType="submit">
+                          Comment
+                        </Button>
+                      </Form.Item>
+                    </Form>
                   </Row>
 
                 </Row>

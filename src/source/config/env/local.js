@@ -4,6 +4,6 @@ module.exports={
         port: 27017,
         user: "root",
         password: "Haiktvn1.",
-        database: "chat_realtime",
+        database: "data-distribution",
     }
 };

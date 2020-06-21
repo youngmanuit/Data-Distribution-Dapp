@@ -93,7 +93,7 @@ class extends React.Component {
       return (
         <Modal
           visible={visible}
-          title="Upload media"
+          title="Upload dataset"
           okText="Submit"
           onCancel={onCancel}
           onOk={onCreate}
@@ -101,39 +101,40 @@ class extends React.Component {
         <Form layout="vertical">
           <Form.Item label="Media's name">
           {getFieldDecorator('SongName', {
-            rules: [{ required: true, message: 'Please input the name of this song!' }],
-          })(<Input placeholder="Please select song's name" />)}
+            rules: [{ required: true, message: 'Please input the name of this dataset!' }],
+          })(<Input placeholder="Please select dataset's name" />)}
         </Form.Item>
 
-        <Form.Item label="Artists's name">
+        <Form.Item label="Provider's name">
           {getFieldDecorator('ArtistsName', {
-            rules: [{ required: true, message: "Please input artists'name!" }],
-          })(<Input placeholder="Please select artists's name" />)}
+            rules: [{ required: true, message: "Please input provider's name!" }],
+          })(<Input placeholder="Please select provider's name" />)}
         </Form.Item>
 
         <Form.Item label="Tags">
           {getFieldDecorator('Tags', {
             rules: [
-              { message: 'Please select song\'s tag ', type: 'array' },
+              { message: 'Please select dataset\'s tag ', type: 'array' },
             ],
           })(
-            <Select mode="multiple" placeholder="Please select song's tag">
-              <Option value="Rap">Rap</Option>
-              <Option value="Rock">Rock</Option>
-              <Option value="young">Young</Option>
-              <Option value="pre-war">Pre-war</Option>
-              <Option value="lyrical">Lyrical</Option>
-              <Option value="US-UK">US-UK</Option>
+            <Select mode="multiple" placeholder="Please select dataset's tag">
+              <Option value="personaldata">Personal Data</Option>
+              <Option value="sport">Sport</Option>
+              <Option value="medical">Medical</Option>
+              <Option value="realestate">Real-Estate</Option>
+              <Option value="Hospitality">Hospitality</Option>
+              <Option value="Economy">Economy</Option>
+              <Option value="Weather">Weather</Option>
             </Select>,
           )}
         </Form.Item>
 
-        <Form.Item label="Price HAK">
-          {getFieldDecorator('Price', {rules: [{ required: true, message: 'Please input cost of this song!'}], initialValue: 0, onChange: (e) => {
+        <Form.Item label="Price DIV">
+          {getFieldDecorator('Price', {rules: [{ required: true, message: 'Please input cost of this Dataset!'}], initialValue: 0, onChange: (e) => {
             // e = Math.ceil(e)
             this.setState({USD: e/this.state.costUSD})
             }})(<InputNumber min={0} max={10000000000} />)}
-          <span className="ant-form-text"> HAK</span>
+          <span className="ant-form-text"> DIV</span>
           <span className="ant-form-text">➜   {this.state.USD} USD</span>
         </Form.Item>
 
@@ -162,7 +163,7 @@ class extends React.Component {
           )}
         </Form.Item>
 
-        <Form.Item label="Upload Music">
+        <Form.Item label="Upload Dataset">
           {getFieldDecorator('Music', {
             valuePropName: 'fileList',
             getValueFromEvent: this.normFileMusic,
@@ -172,7 +173,7 @@ class extends React.Component {
               <p className="ant-upload-drag-icon" >
                 <Icon type="inbox" />
               </p>
-              <p className="ant-upload-text">Click or drag file to this area to upload music</p>
+              <p className="ant-upload-text">Click or drag file to this area to upload dataset</p>
             </Upload.Dragger>,
           )}
         </Form.Item>
@@ -204,7 +205,7 @@ class UploadModal extends React.Component {
       }
       if(values.Music[0].status == "uploading" || values.Image[0].status == "uploading" )
         return Modal.error({
-          title: 'Please waiting for music or image upload!',
+          title: 'Please waiting for dataset or image upload!',
       })
       form.resetFields();
       this.child.resetUSD();

@@ -22,15 +22,15 @@ const CollectionCreateForm =
         return (
           <Modal
             visible={visible}
-            title="Invest ISO"
+            title="Labeling"
             okText="Submit"
             onCancel={onCancel}
             onOk={onCreate}
           >
             <Form layout="horizontal">
-              <Form.Item label="Offer Amount">
+              <Form.Item label="labeled File">
                 {getFieldDecorator('investAmount', {
-                  rules: [{ required: true, message: 'Please input amount to invest!'}],
+                  rules: [{ required: true, message: 'Please input a string!'}],
                   initialValue: 0
                 })(
                   <InputNumber
@@ -46,6 +46,7 @@ const CollectionCreateForm =
         );
       }
     }
+    const WrappedLogin = Form.create()(CollectionCreateForm)
 
 export default class InvestISO extends React.Component {
   state = {
@@ -73,7 +74,7 @@ export default class InvestISO extends React.Component {
   };
 
   openUploadNotification = (values) => {
-    showNotificationLoading("Invest Loading ...")
+    showNotificationLoading("Label Loading ...")
     let data = {
       ...values,
       idFile: this.props.idFile
@@ -95,12 +96,12 @@ export default class InvestISO extends React.Component {
   render() {
     return (
       <div>
-        <Tooltip title="Invest this song" placement="leftTop">
+        <Tooltip title="Label this dataset" placement="leftTop">
           <Button disabled={this.props.disabled} type="primary" ghost icon="bg-colors" onClick={this.showModal}>
-            <Text>Invest</Text>
+            <Text>Label</Text>
           </Button>
         </Tooltip>
-        <CollectionCreateForm
+        <WrappedLogin
           wrappedComponentRef={this.saveFormRef}
           visible={this.state.visible}
           onCancel={this.handleCancel}

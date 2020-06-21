@@ -5,8 +5,6 @@ import './index.css';
 import { Form, Icon, Input, Button, Checkbox, Modal, Typography } from 'antd';
 import {connect} from 'react-redux';
 import { login, signin_fail_handle} from '../../actions/user'
-import login1 from '../../torus-login.svg';
-import getWeb3Torus from '../../config/getWeb3Torus';
 const { Text } = Typography;
 
 class LoginForm extends React.Component {
@@ -22,11 +20,6 @@ class LoginForm extends React.Component {
         this.props.login(values.email, values.password)
       }
     });
-  };
-  login = async () => {
-    const web3 = await getWeb3Torus();
-    const accounts = await web3.eth.getAccounts();
-    alert(accounts);
   };
 
   render() {
@@ -91,11 +84,6 @@ class LoginForm extends React.Component {
             Log in
           </Button> 
           Or<Button onClick={()=>this.props.history.push('/register')} type="link">register now!</Button>
-        </Form.Item>
-        <Form.Item>
-              <div className='container-custom'>
-                <img alt='' src={login1} onClick={this.login} className='gif-load' />
-              </div>  
         </Form.Item>
       </Form>
       </div>

@@ -1,12 +1,13 @@
 import React, { Component } from 'react'
 import io from 'socket.io-client'
 import config from '../../config'
-import { AutoComplete, Button, Icon, Input, Badge, Tooltip, Dropdown, Menu, Typography, InputNumber, Modal, Avatar, Result } from 'antd';
+import { AutoComplete, Button, Icon, Form, Input, Badge, Tooltip, Dropdown, Menu, Typography, InputNumber, Modal, Avatar, Result } from 'antd';
 import logo from '../../images/logo.jpg'
 import {getFaucet, getNotification} from '../../api/userAPI'
 import {showNotificationTransaction, showNotificationLoading, formatThousands, estimatedTime} from '../../utils/common'
 import { connect} from 'react-redux'
 import { getBalance } from '../../actions/user' 
+import QRCode from 'qrcode.react';
 
 const { Text, Paragraph } = Typography;
 class Header extends Component {
@@ -17,6 +18,7 @@ class Header extends Component {
         notificationCount: 0,
         loading: false,
         visible1: false,
+        visible2: false,
     };
     onClickLogOut = () => {
         this.props.logOut();
@@ -81,7 +83,21 @@ class Header extends Component {
         visible1: true,
       });
     };
+    showModal1 = () => {
+      this.setState({
+        visible2: true,
+      });
+    };
+    handleOk1 = () => {
+      this.setState({ loading: true });
+      setTimeout(() => {
+        this.setState({ loading: false, visible2: false });
+      }, 3000);
+    };
   
+    handleCancel1 = () => {
+      this.setState({ visible2: false });
+    };
     handleOk = () => {
       this.setState({ loading: true });
       setTimeout(() => {
@@ -101,7 +117,8 @@ class Header extends Component {
     }
 
   render () {
-    const { visible,visible1, amountFaucet,loading, notificationCount, notificationData } = this.state;
+    const { visible,visible1,visible2, amountFaucet,loading, notificationCount, notificationData, form } = this.state;
+    // const { getFieldDecorator } = form;
     const dataSource = ['Burns Bay Road', 'Downing Street', 'Wall Street'];
     let menuNotification = (
       <Menu>
@@ -240,27 +257,64 @@ class Header extends Component {
                 {/* <Button ghost style={{color: '#424242', marginLeft: 5}} onClick={()=> this.props.history.push('/find-data')} >GET PERSONAL DATA</Button> */}
                 {/* <Button type="primary" onClick={this.showModal}>GET PERSONAL DATA</Button> */}
                 <Button ghost type="primary" style={{color: '#D80000'}} onClick={this.warning}>GET PERSONAL DATA</Button>
-                {/* <Modal.warning
+                <Button type="primary" style={{marginLeft: 5}} onClick={this.showModal}>RECEIVE</Button>
+                <Button type="primary" style={{marginLeft: 5}} onClick={this.showModal1}>TRANSFER</Button>
+                <Modal
                   visible={visible1}
-                  title={<h2>DỮ LIỆU CÁ NHÂN!</h2>}
+                  title={<h2>Div Wallet Address</h2>}
                   onOk={this.handleOk}
                   onCancel={this.handleCancel}
                   footer={[
                     <Button key="back" onClick={this.handleCancel}>
+                      OK
+                    </Button>,
+                  ]}
+                >
+                  <QRCode
+                    id='qrcode'
+                    value='DJDJDJDJDJJD'
+                    size={290}
+                    level={'H'}
+                    includeMargin={true}
+                  />
+                </Modal>
+                <Modal
+                  visible={visible2}
+                  title={<h2>Transfer</h2>}
+                  onOk={this.handleOk1}
+                  onCancel={this.handleCancel1}
+                  footer={[
+                    <Button key="back" onClick={this.handleCancel1}>
                       Return
                     </Button>,
-                    <Button key="submit" type="primary" loading={loading} onClick={this.handleOk}>
+                    <Button key="submit" type="primary" loading={loading} onClick={this.handleOk1}>
                       Submit
                     </Button>,
                   ]}
-                > */}
-                  {/* <p>Some contents...</p>
-                  <p>Some contents...</p>
-                  <p>Some contents...</p>
-                  <p>Some contents...</p>
-                  <p>Some contents...</p>
-                </Modal.warning> */}
-                <AutoComplete
+                >
+                  <h1>AMOUNT</h1>
+                  <p>Balance ... DIVs</p>
+                  {/* Form.create()(<Form>
+                      <Form.Item label="To">
+                        {getFieldDecorator('address',
+                        )(<Input />)}
+                      </Form.Item>
+                      <Form.Item label="Password" hasFeedback>
+                        {getFieldDecorator('password', {
+                          rules: [
+                            {
+                              required: true,
+                              message: 'Please input your password!',
+                            },
+                            {
+                              validator: this.validateToNextPassword,
+                            },
+                          ],
+                        })(<Input.Password />)}
+                      </Form.Item>
+                    </Form>) */}
+                </Modal>
+                {/* <AutoComplete
                     disabled
                     style={{ width: 200 }}
                     dataSource={dataSource}
@@ -270,7 +324,8 @@ class Header extends Component {
                     }
                 >
                     <Input suffix={<Icon type="search"  className="certain-category-icon" />} />
-                </AutoComplete>
+                </AutoComplete> */}
+                
             </div>
             <div style={{display: 'flex', alignItems: 'center'}}>
                 <Tooltip placement="topLeft" title="Home Page" arrowPointAtCenter>
@@ -299,7 +354,7 @@ class Header extends Component {
                 </Tooltip>
                 <Tooltip placement="topLeft" title="Contract" arrowPointAtCenter>
                     <Badge count={0}>
-                        <Icon type="profile" style={{ color: '#1da1f2', fontSize: 25, paddingLeft: 17 }} />
+                        <Icon type="profile" onClick={()=> this.props.history.push('/tempContract/:idTempContract')} style={{ color: '#1da1f2', fontSize: 25, paddingLeft: 17 }} />
                     </Badge>
                 </Tooltip>
                 <Dropdown overlay={menu} trigger={['click']}>

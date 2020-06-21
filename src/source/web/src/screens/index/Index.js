@@ -10,7 +10,7 @@ export default class Index extends Component {
     render() {
         return (
             <div class="view">
-              <img src={logo} alt="Justice music" style={{ width: "70px", height: "70px"}} />
+              <img src={logo} alt="Data Distribution" style={{ width: "70px", height: "70px"}} />
               <a class="plane main" href='/login'>
                 <div class="circle"></div>
                 <div class="circle"></div>

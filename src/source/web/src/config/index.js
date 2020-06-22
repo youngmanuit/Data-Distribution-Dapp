@@ -336,5 +336,5 @@ const config = {
         }
     ],
 }
-window.$linkIPFS = 'https://ipfs.fotra.tk/ipfs/'
+window.$linkIPFS = 'https://ipfs.jumu.tk/'
 module.exports = config

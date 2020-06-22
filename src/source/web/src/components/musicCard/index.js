@@ -18,7 +18,7 @@ class MusicCard extends React.Component {
   render() {
     const {songInfo, contract} = this.props
     return (
-      <Tooltip title={songInfo.view + ' view song'} placement="top">
+      <Tooltip title={songInfo.view + ' view'} placement="top">
         {
           contract ?
         <Card

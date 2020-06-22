@@ -97,6 +97,12 @@ var userSchema = mongoose.Schema({
         type: String,
         trim: true,
     },
+    isAdmin: {
+        type: Boolean,
+        trim: true,
+        default: false,
+    },
+    validateUser : [String],
     addressEthereum: {
         type: String,
         trim: true,

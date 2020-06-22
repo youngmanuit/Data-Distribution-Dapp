@@ -1,34 +1,34 @@
-// const config = require('../../config')
-// const db_mongo = require(config.models_dir + '/mongo');
-// const Haha = require(config.models_dir + '/mongo/haha');
-// // this file to test database connect
-// db_mongo.connect()
-// .then (() => {
-//     console.log("connected");
-//     var usertest = new Haha({
-//         email: "keytideptrai3@gmail.com",
-//         name: "nguyen hoang hai",
-//         phone: "96341643463416346343",
-//         password_hash: "thisismypassword",
-//         avatar: "deoco",
-//         birthday: "1997-05-24",
-//       })
-//       usertest.save( err => {
-//         if(err) throw err;
-//         console.log("Add sucessfull")
-//     })
-// }).catch((e) => {
-//   console.log(e)
-// })
-const axios = require('axios')
-var fs = require('fs');
-var request = require('request').defaults({ encoding: null });
-const config = require('../../config');
-let fetch = require('node-fetch');
-const getHashIPFS = require(config.library_dir + '/ipfs').getHashIPFS
-const FileType = require('file-type');
+const config = require('../../config')
+const db_mongo = require(config.models_dir + '/mongo');
+const User = require(config.models_dir + '/mongo/user');
+// this file to test database connect
+db_mongo.connect()
+.then (() => {
+    console.log("connected");
+    var usertest = new User({
+        email: "keytideptrai3@gmail.com",
+        name: "nguyen hoang hai",
+        phone: "0337597788",
+        password_hash: "thisismypassword",
+        avatar: "deoco",
+        birthday: "1997-05-24",
+      })
+      usertest.save( err => {
+        if(err) throw err;
+        console.log("Add sucessfull")
+    })
+}).catch((e) => {
+  console.log(e)
+})
+// const axios = require('axios')
+// var fs = require('fs');
+// var request = require('request').defaults({ encoding: null });
+// const config = require('../../config');
+// let fetch = require('node-fetch');
+// const getHashIPFS = require(config.library_dir + '/ipfs').getHashIPFS
+// const FileType = require('file-type');
 
-// request.get('https://ipfs.fotra.tk/ipfs/QmW1BnLXQJJKcJffD8K97vBcnAx3ThjgxAgudfJfXGjQhJ', async function (err, res, body222) {
+// request.get('https://ipfs.jumu.tk/ipfs/QmW1BnLXQJJKcJffD8K97vBcnAx3ThjgxAgudfJfXGjQhJ', async function (err, res, body222) {
 //     //process exif here
 //     console.log(err)
 //     console.log(res)
@@ -70,23 +70,23 @@ const FileType = require('file-type');
 // });
 
 
-axios.get(`https://ipfs.io/ipfs/QmZimW456PmaUy5SLjfGPKxPUXmH
-Sm7zAQoGruV9c8UD2U`)
-.then(function (response) {
+// axios.get(`https://ipfs.io/ipfs/QmZimW456PmaUy5SLjfGPKxPUXmH
+// Sm7zAQoGruV9c8UD2U`)
+// .then(function (response) {
 
-    console.log(Object.keys(response)); // Outputs ["a","b","c"]
-    console.log(response.data
-        )
-})
-.catch(function (error) {
-  console.log(error);
-});
+//     console.log(Object.keys(response)); // Outputs ["a","b","c"]
+//     console.log(response.data
+//         )
+// })
+// .catch(function (error) {
+//   console.log(error);
+// });
 
 
 
 // var FormData = require('form-data');
 // const form = new FormData();
-// const stream = fs.createReadStream('https://ipfs.fotra.tk/ipfs/QmZimW456PmaUy5SLjfGPKxPUXmHSm7zAQoGruV9c8UD2U');
+// const stream = fs.createReadStream('https://ipfs.jumu.tk/ipfs/QmZimW456PmaUy5SLjfGPKxPUXmHSm7zAQoGruV9c8UD2U');
 
 // form.append('audio', stream);
 
@@ -101,7 +101,7 @@ Sm7zAQoGruV9c8UD2U`)
 // .then(response => console.log(response))
 // .catch(error => console.log(error))
 
-// request.get('https://ipfs.fotra.tk/ipfs/QmUzvaqtvvnCmkTmTNRYQJsnFfi3PFFnQr6jABbgfeMSXy', async function (err, res, body222) {
+// request.get('https://ipfs.jumu.tk/ipfs/QmUzvaqtvvnCmkTmTNRYQJsnFfi3PFFnQr6jABbgfeMSXy', async function (err, res, body222) {
 //     //process exif here
 //     console.log(err)
 //     console.log(res)
@@ -113,11 +113,11 @@ Sm7zAQoGruV9c8UD2U`)
 
 // async function haha() {
   
-// //   const stream = request('https://ipfs.fotra.tk/ipfs/QmZimW456PmaUy5SLjfGPKxPUXmHSm7zAQoGruV9c8UD2U').pipe(fs.createWriteStream('song.mp3'))
+// //   const stream = request('https://ipfs.jumu.tk/ipfs/QmZimW456PmaUy5SLjfGPKxPUXmHSm7zAQoGruV9c8UD2U').pipe(fs.createWriteStream('song.mp3'))
 // //   console.log("hihi")
 // //   setTimeout(function(){ 
 // // form.append('audio', stream);
-// request.get('https://ipfs.fotra.tk/ipfs/Qme5uQmftCgJ1ViYKPRov8wCKWH2A2oohywUSa9vJgBPzC', async function (err, res, body222) {
+// request.get('https://ipfs.jumu.tk/ipfs/Qme5uQmftCgJ1ViYKPRov8wCKWH2A2oohywUSa9vJgBPzC', async function (err, res, body222) {
 //     //process exif here
 //   const name = "hiihih-hhh"
 //     form.append('audio', body222, {filename: 'NameSongTemp.mp3', contentType: 'audio/mp3'});

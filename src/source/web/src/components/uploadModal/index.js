@@ -18,26 +18,26 @@ import config from '../../config';
 import {getUserUpload} from '../../actions/page'
 import { connect} from 'react-redux'
 
-function beforeUpload(file, kind) {
-  if(kind === "Image"){
-    const isJpgOrPng = file.type === 'image/jpeg' || file.type === 'image/png';
-    if (!isJpgOrPng) {
-      message.error('You can only upload JPG/PNG file!');
-    }
-    const isLt2M = file.size / 1024 / 1024 < 2;
-    if (!isLt2M) {
-      message.error('Image must smaller than 2MB!');
-    }
-    return isJpgOrPng && isLt2M;
-  }
-  else if(kind === "Music"){
-    const isMp3 = file.type === 'audio/mp3';
-    if (!isMp3) {
-      message.error('You can only upload Mp3 file!');
-    }
-    return isMp3;
-  }
-}
+// function beforeUpload(file, kind) {
+//   if(kind === "Image"){
+//     const isJpgOrPng = file.type === 'image/jpeg' || file.type === 'image/png';
+//     if (!isJpgOrPng) {
+//       message.error('You can only upload JPG/PNG file!');
+//     }
+//     const isLt2M = file.size / 1024 / 1024 < 2;
+//     if (!isLt2M) {
+//       message.error('Image must smaller than 2MB!');
+//     }
+//     return isJpgOrPng && isLt2M;
+//   }
+//   else if(kind === "Music"){
+//     const isMp3 = file.type === 'audio/mp3';
+//     if (!isMp3) {
+//       message.error('You can only upload Mp3 file!');
+//     }
+//     return isMp3;
+//   }
+// }
 
 const CollectionCreateForm = Form.create({ name: 'form_in_modal' })(
   // eslint-disable-next-line
@@ -57,9 +57,6 @@ class extends React.Component {
     }
 
     normFileMusic =  e => {
-    if(!beforeUpload(e.file, "Music"))
-      return
-    else{
       console.log('Upload event:', e);
       if (Array.isArray(e)) {
           return e;
@@ -68,13 +65,9 @@ class extends React.Component {
           e.fileList = e.fileList.slice(-1);
       }
       return e && e.fileList;
-      };
     }
 
     normFileImage =  e => {
-    if(!beforeUpload(e.file, "Image"))
-      return
-    else{
       console.log('Upload event:', e);
       if (Array.isArray(e)) {
           return e;
@@ -83,7 +76,6 @@ class extends React.Component {
           e.fileList = e.fileList.slice(-1);
       }
       return e && e.fileList;
-      };
     }
 
     render() {
